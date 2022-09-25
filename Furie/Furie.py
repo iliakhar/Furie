@@ -1,93 +1,109 @@
 import math
 import matplotlib.pyplot as plt
 
-def CalculateFunc(x):
-    #return math.sin(x)
-    return x*x*x-math.sin(x)
-
-def CreateCoordList(start, stop, step):
-    allCoord = [[]]
-    allCoord.append([])
-    #pointCoord = []
-    curPos = start
-    while curPos < stop:
-        allCoord[0].append(curPos)
-        allCoord[1].append(CalculateFunc(curPos))
-        curPos+=step
-
-    return allCoord
-
-def dft(data):
-    furieList = [[]]
-    furieList.append([])
-    for k in range(len(data[0])):
-        re = 0.0
-        im = 0.0
-        for n in range(len(data[0])):
-            y = data[1][n]
-            arg = 2 * math.pi *k*n/len(data[0])
-            reCos = math.cos(arg)
-            imSin = math.sin(arg)
-            re += y * reCos
-            im -= y * imSin
-            
-        furieList[0].append(re/len(data[0]))
-        furieList[1].append(im/len(data[0]))
-
-
-    return furieList
-
-
-def idft(furieCoord):
+def dft(coord, isForward):
     origCoord = [[]]
     origCoord.append([])
-    for k in range(len(furieCoord[0])):
+    divider = len(coord[0])
+    numSign = -1
+    if isForward == False:
+        divider = 1
+        numSign = 1
+    for k in range(len(coord[0])):
 
         re = 0.0
         im = 0.0
-        for n in range(len(furieCoord[0])):
-            x = furieCoord[0][n]
-            y = furieCoord[1][n]
-            arg = 2*math.pi*k*n/len(furieCoord[0])
+        for n in range(len(coord[0])):
+            x = coord[0][n]
+            y = coord[1][n]
+            arg = 2*math.pi*k*n/len(coord[0])
             reCos = math.cos(arg)
             imSin = math.sin(arg)
             re += (x*reCos-y*imSin)
-            im += (x*imSin + y*reCos)
-        origCoord[0].append(re)
-        origCoord[1].append(im)
+            im += (x*imSin + y*reCos)*numSign
+        origCoord[0].append(re/divider)
+        origCoord[1].append(im/divider)
     return origCoord
 
-data = [[0,0,0,0], [1,0,1,0]]
+###############################################
+def dftA1(data, p1, p2, isForward):
+    furieA1=[[]]
+    furieA1.append([])
+    divider = p1
+    numSign = -1
+    if isForward == False:
+        divider = 1
+        numSign = 1
+    for j2 in range(p2):
+        for k1 in range(p1):
+            re = 0.0
+            im = 0.0
+            for j1 in range(p1):
+                x = data[0][j2 + p2*j1]
+                y = data[1][j2 + p2*j1]
+                arg = 2 * math.pi *j1*k1/p1
+                reCos = math.cos(arg)
+                imSin = math.sin(arg)
+                re += (x*reCos-y*imSin)
+                im += (x*imSin + y*reCos)*numSign
+            furieA1[0].append(re/divider)
+            furieA1[1].append(im/divider)
+    return furieA1
+
+
+def dftA2(data, p1, p2, isForward):
+    furieA2 = [[]]
+    furieA2.append([])
+    furieA1 = dftA1(data, p1, p2, isForward)
+    divider = p2
+    numSign = -1
+    if isForward == False:
+        divider = 1
+        numSign = 1
+    for k2 in range(p2):
+        for k1 in range(p1):
+            re = 0.0
+            im = 0.0
+            for j2 in range(p2):
+                x = furieA1[0][k1 + j2*p1]
+                y = furieA1[1][k1 + j2*p1]
+                arg = 2*math.pi*((j2/(p1*p2))*(k1+p1*k2))
+                reCos = math.cos(arg)
+                imSin = math.sin(arg)
+                re += (x*reCos-y*imSin)
+                im += (x*imSin + y*reCos)*numSign
+            furieA2[0].append(re/divider)
+            furieA2[1].append(im/divider)
+    return furieA2
+
+
+
+###############################################
+
+data = [[3,8,4,7,15,11], [0,0,0,0,0,0]]
 data.append([])
 
+furieList = dft(data, True)
 
-#data = CreateCoordList(-3, 7, 0.1)
+origCoord = dft(furieList, False)
 
-
-furieList = dft(data)
-
-origCoord = idft(furieList)
-
-print(data[1])
+print(data[0])
 
 print("\nRe and Im:")
 for i in range(len(furieList[0])):
-    print(round(furieList[0][i], 5), "  ", round(furieList[1][i], 5), "\n" )
+    print(round(furieList[0][i], 5), "\t", round(furieList[1][i], 5), "\n" )
 
 print("\n Answer:")
 for i in range(len(origCoord[0])):
-    print(round(origCoord[0][i], 5), "  ", round(origCoord[1][i], 5), "\n" )
+    print(round(origCoord[0][i], 5), "\t", round(origCoord[1][i], 5), "\n" )
 
-#plt.plot(data[0], data[1], 'b-')
-#plt.plot(data[0], furieList[0], 'k-')
-#plt.plot(data[0], furieList[1], 'g-')
+print("\n\n\t\t\t\t\tSecond Furie\nRe and Im:")
+furieA2 = dftA2(data, 2, 3, True)
+for i in range(len(origCoord[0])):
+    print(round(furieA2[0][i], 5), "\t", round(furieA2[1][i], 5), "\n" )
 
-#plt.grid()
-#plt.show()
-
-#plt.plot(data[0], origCoord[0], 'r-')
-#plt.plot(data[0], furieList[0], 'k-')
-#plt.plot(data[0], furieList[1], 'g-')
-
-#plt.grid()
-#plt.show()
+origCoord.clear()
+origCoord = dftA2(furieA2, 2, 3, False)
+print("\n Answer:")
+for i in range(len(origCoord[0])):
+    print(round(origCoord[0][i], 5), "\t", round(origCoord[1][i], 5), "\n" )
