@@ -29,38 +29,49 @@ def dft(coord, isForward):
         origCoord[1].append(im/divider)
     return origCoord
 
+
 ###############################################
 def dftA1(data, p1, p2, isForward):
     global N1
-    furieA1=[[]]
-    furieA1.append([])
+    #furieA1=[[]]
+    #furieA1.append([])
+    furieA1 = [[None]*p1*p2]
+    furieA1.append([None]*p1*p2)
     divider = p1
-    numSign = -1
+    numSign = 1
     if isForward == False:
         divider = 1
         numSign = 1
-    for j2 in range(p2):
-        for k1 in range(p1):
+    for k1 in range(p1):
+        for j2 in range(p2):
             re = 0.0
             im = 0.0
             for j1 in range(p1):
                 N1+=5
                 x = data[0][j2 + p2*j1]
                 y = data[1][j2 + p2*j1]
+                #x = data[0][j2*p1 + j1]
+                #y = data[1][j2*p1 + j1]
                 arg = 2 * math.pi *j1*k1/p1
                 reCos = math.cos(arg)
                 imSin = math.sin(arg)
                 re += (x*reCos-y*imSin)
                 im += (x*imSin + y*reCos)*numSign
-            furieA1[0].append(re/divider)
-            furieA1[1].append(im/divider)
+            furieA1[0][k1*p2 + j2] = re/divider
+            furieA1[1][k1*p2 + j2] = im/divider
+            #furieA1[0][k1 + j2*p1] = re/divider
+            #furieA1[1][k1 + j2*p1] = im/divider
+            
     return furieA1
+
 
 
 def dftA2(data, p1, p2, isForward):
 
-    furieA2 = [[]]
-    furieA2.append([])
+    #furieA2 = [[]]
+    #furieA2.append([])
+    furieA2 = [[None]*p1*p2]
+    furieA2.append([None]*p1*p2)
     global N1
     N1 = 0
     furieA1 = dftA1(data, p1, p2, isForward)
@@ -75,33 +86,40 @@ def dftA2(data, p1, p2, isForward):
             im = 0.0
             for j2 in range(p2):
                 N1+=5
-                x = furieA1[0][k1 + j2*p1]
-                y = furieA1[1][k1 + j2*p1]
-                arg = 2*math.pi*((j2/(p1*p2))*(k1+p1*k2))
+                x = furieA1[0][k1*p2 + j2]
+                y = furieA1[1][k1*p2 + j2]
+                #x, y = dftA12(data,p1,p2,k1,j2,isForward)
+                #x = furieA1[0][k1 + j2*p1]
+                #y = furieA1[1][k1 + j2*p1]
+                arg = 2*math.pi*((j2*(k1+p1*k2)/(p1*p2)))
                 reCos = math.cos(arg)
                 imSin = math.sin(arg)
                 re += (x*reCos-y*imSin)
                 im += (x*imSin + y*reCos)*numSign
-            furieA2[0].append(re/divider)
-            furieA2[1].append(im/divider)
+            furieA2[0][k2*p1 + k1] = re/divider
+            furieA2[1][k2*p1 + k1] = im/divider
+            #furieA2[0][k2 + k1*p2] = re/divider
+            #furieA2[1][k2 + k1*p2] = im/divider
     return furieA2
 
 
 
 ###############################################
 
-data = [[1,2,3,4,5,6], [0,0,0,0,0,0,0]]
+data = [[1,2,3,4,5,6,7,8,9], [0,0,0,0,0,0,0,0,0]]
 
 size = len(data[0])
 for i in range(1, math.floor(math.sqrt(len(data[0])))+1):
     if(size%i==0):
         mult1 = i
         mult2 = int(size/i)
+
 print("\n\nMult: ",mult1," ",mult2,"\n\n")
 data.append([])
 
 furieList= dft(data, True)
 kCount = N1
+#origCoord = dftA2(furieList, mult1, mult2, False)
 origCoord = dft(furieList, False)
 origCount = N1
 
