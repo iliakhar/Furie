@@ -102,11 +102,108 @@ def dftA2(data, p1, p2, isForward):
             #furieA2[1][k2 + k1*p2] = im/divider
     return furieA2
 
+def DecToRevBinary(binar, num):
+    powerOf2 = 0
+    while(num != 0):
+        binar.append(int(num%2))
+        num=int(num/2)
+        powerOf2+=1
+    return powerOf2
 
+def DecToBinary(binar, num):
+    powerOf2 = 0
+    while(num != 0):
+        binar.insert(0, int(num%2))
+        num=int(num/2)
+        powerOf2+=1
+    return powerOf2
+
+def BinaryToDec(binar):
+    num = 0
+    powerOf2 = 1
+    for i in range(len(binar)-1, -1,-1):
+        num += binar[i]*powerOf2
+        powerOf2*=2
+    return num
+
+def RevBinaryToDec(binar):
+    num = 0
+    powerOf2 = 1
+    for i in range(len(binar)):
+        num += binar[i]*powerOf2
+        powerOf2*=2
+    return num
+
+def fftAn(r, dt, binarMaxSize, isForward):
+    for i in range(len(dt[0])):
+        print(round(dt[0][i], 5), "\t", round(dt[1][i], 5), "\n" )
+    print("\n")
+
+    answ = [[]]
+    answ.append([])
+    divider = 2
+    numSign = 1
+    if isForward == False:
+        divider = 1
+        numSign = 1
+    for i in range(len(dt[0])):
+        binar = []
+        DecToBinary(binar, i)
+        for j in range(binarMaxSize - len(binar)):
+            binar.insert(0, 0)
+        
+        ksum = 0
+        powerOf2 = 1
+        for j in range(r):
+            ksum+=powerOf2*binar[j]
+            powerOf2*=2
+        arg = 2*math.pi*ksum/powerOf2
+        binar[r-1] = 1
+        ind = BinaryToDec(binar)
+        x = dt[0][ind]
+        y = dt[1][ind]
+        reCos = math.cos(arg)
+        imSin = math.sin(arg)
+        re = (x*reCos-y*imSin)
+        im = (x*imSin + y*reCos)*numSign
+
+        binar[r-1] = 0
+        ind = BinaryToDec(binar)
+        x = dt[0][ind]
+        y = dt[1][ind]
+        re += x
+        im += y*numSign
+        answ[0].append(re/divider)
+        answ[1].append(im/divider)
+    return answ
+
+
+def fft(data, isForward):
+    k = []
+    dt = data[:]
+    answ = [[]]
+    answ.append([])
+    binarMaxSize = DecToRevBinary(k, len(data[0]) - 1)
+    for i in range(binarMaxSize):
+        dt = fftAn(i+1, dt, binarMaxSize, isForward)
+
+    for i in range(len(dt[0])):
+        k = []
+        DecToRevBinary(k, i)
+        for j in range(binarMaxSize - len(k)):
+            k.append(0)
+        ind = BinaryToDec(k)
+        answ[0].append(dt[0][ind])
+        answ[1].append(dt[1][ind])
+    dt = answ
+    return dt
+    
 
 ###############################################
 
-data = [[1,2,3,4,5,6,7,8,9], [0,0,0,0,0,0,0,0,0]]
+#data = [[1,2,3,4], [0,0,0,0]]
+data = [[1,2,3,4,5,6,7,8], [0,0,0,0,0,0,0,0]]
+#data = [[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8], [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
 
 size = len(data[0])
 for i in range(1, math.floor(math.sqrt(len(data[0])))+1):
@@ -119,7 +216,6 @@ data.append([])
 
 furieList= dft(data, True)
 kCount = N1
-#origCoord = dftA2(furieList, mult1, mult2, False)
 origCoord = dft(furieList, False)
 origCount = N1
 
@@ -129,22 +225,45 @@ print("\nRe and Im:")
 for i in range(len(furieList[0])):
     print(round(furieList[0][i], 5), "\t", round(furieList[1][i], 5), "\n" )
 
-print("\nDir and Rev = ", kCount, "  ", origCount)
-print("\n\n Answer:")
-for i in range(len(origCoord[0])):
-    print(round(origCoord[0][i], 5), "\t", round(origCoord[1][i], 5), "\n" )
 
-print("\n\n\t\t\t\t\tSecond Furie\nRe and Im:")
-furieA2 = dftA2(data, mult1, mult2, True)
+
+#print("\nDir and Rev = ", kCount, "  ", origCount)
+#print("\n\n Answer:")
+#for i in range(len(origCoord[0])):
+#    print(round(origCoord[0][i], 5), "\t", round(origCoord[1][i], 5), "\n" )
+
+#print("\n\n\t\t\t\t\tSecond Furie\nRe and Im:")
+#furieA2 = dftA2(data, mult1, mult2, True)
+#kCount = N1
+#for i in range(len(furieA2[0])):
+#    print(round(furieA2[0][i], 5), "\t", round(furieA2[1][i], 5), "\n" )
+
+#origCoord.clear()
+#origCoord = dftA2(furieA2, mult1, mult2, False)
+#origCount = N1
+#print("\n Answer:")
+#for i in range(len(origCoord[0])):
+#    print(round(origCoord[0][i], 5), "\t", round(origCoord[1][i], 5), "\n" )
+
+#print("\nDir and Rev = ", kCount, "  ", origCount)
+
+print("\n\n\t\t\t\t\tThird Furie\nRe and Im:")
+furieList= fft(data, True)
+for i in range(len(furieList[0])):
+    furieList[1][i]*=-1
+print("\nRe and Im:")
+for i in range(len(furieList[0])):
+    print(round(furieList[0][i], 5), "\t", round(furieList[1][i], 5), "\n" )
+
+furieA3 = fft(furieList, False)
+print("\n\n")
 kCount = N1
-for i in range(len(furieA2[0])):
-    print(round(furieA2[0][i], 5), "\t", round(furieA2[1][i], 5), "\n" )
+for i in range(len(furieA3[0])):
+    print(round(furieA3[0][i], 5), "\t", round(furieA3[1][i], 5), "\n" )
+#origCoord.clear()
 
-origCoord.clear()
-origCoord = dftA2(furieA2, mult1, mult2, False)
-origCount = N1
-print("\n Answer:")
-for i in range(len(origCoord[0])):
-    print(round(origCoord[0][i], 5), "\t", round(origCoord[1][i], 5), "\n" )
-
-print("\nDir and Rev = ", kCount, "  ", origCount)
+#origCoord = fft(furieA3, False)
+#origCount = N1
+#print("\n Answer:")
+#for i in range(len(origCoord[0])):
+#    print(round(origCoord[0][i], 5), "\t", round(origCoord[1][i], 5), "\n" )
