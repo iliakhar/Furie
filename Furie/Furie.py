@@ -1,5 +1,5 @@
+from asyncio.windows_events import NULL
 import math
-import matplotlib.pyplot as plt
 N1 =0
 def dft(coord, isForward):
     global N1
@@ -89,79 +89,58 @@ def dftA2(data, p1, p2, isForward):
             furieA2[1][k2*p1 + k1] = im/divider
     return furieA2
 
-def DecToRevBinary(binar, num):
-    powerOf2 = 0
-    while(num != 0):
-        binar.append(int(num%2))
-        num=int(num/2)
-        powerOf2+=1
-    return powerOf2
+###############################################
 
-def DecToBinary(binar, num):
-    powerOf2 = 0
-    while(num != 0):
-        binar.insert(0, int(num%2))
-        num=int(num/2)
-        powerOf2+=1
-    return powerOf2
-
-def BinaryToDec(binar):
-    num = 0
-    powerOf2 = 1
-    for i in range(len(binar)-1, -1,-1):
-        num += binar[i]*powerOf2
-        powerOf2*=2
+def ChangeDigit(num, ind, dg):
+    powOf2 = 2 ** ind
+    if(dg == 1): num |= powOf2
+    else: num &= ~powOf2
     return num
 
-def RevBinaryToDec(binar):
-    num = 0
-    powerOf2 = 1
-    for i in range(len(binar)):
-        num += binar[i]*powerOf2
-        powerOf2*=2
+def MirrorBinarry(num,maxSize):
+    offsetHints = [0b11110000,0b11001100,0b10101010]
+    powOf2 = 4
+    for i in range(3):
+        num = ((num & offsetHints[i])>>powOf2) | ((num & ~offsetHints[i])<<powOf2)
+        powOf2=int(powOf2/2)
+    num >>= 8 - maxSize
     return num
 
-def fftAn(r, dt, binarMaxSize, isForward):
+
+def fftAn(r, dt, binarMaxSize, isForward, isLast = False):
     global N1
-    answ = [[]]
-    answ.append([])
+    answ = [[NULL]*len(dt[0]), [NULL]*len(dt[0])]
     divider = 2
     numSign = -1
+    powerOf2 = 2 ** r
+
     if isForward == False:
         divider = 1
         numSign = 1
     for i in range(len(dt[0])):
         N1+=5
-        binar = []
-        DecToBinary(binar, i)
-        for j in range(binarMaxSize - len(binar)):
-            binar.insert(0, 0)
-        
-        ksum = 0
-        powerOf2 = 1
-        for j in range(r):
-            ksum+=powerOf2*binar[j]
-            powerOf2*=2
+        bn = i
+        mirBn = MirrorBinarry(bn, binarMaxSize)
 
-        binar[r-1] = 0
-        ind = BinaryToDec(binar)
-        re = dt[0][ind]
-        im = dt[1][ind]
+        bn = ChangeDigit(bn, binarMaxSize - r, 0)
+        re = dt[0][bn]
+        im = dt[1][bn]
 
-        arg = 2*math.pi*ksum/powerOf2*numSign
-        binar[r-1] = 1
-        ind = BinaryToDec(binar)
-        x = dt[0][ind]
-        y = dt[1][ind]
+        arg = 2*math.pi*mirBn/powerOf2*numSign
+        bn = ChangeDigit(bn, binarMaxSize - r, 1)
+        x = dt[0][bn]
+        y = dt[1][bn]
         reCos = math.cos(arg)
         imSin = math.sin(arg)
         re += (x*reCos-y*imSin)
         im += (x*imSin + y*reCos)
 
-        
-
-        answ[0].append(re/divider)
-        answ[1].append(im/divider)
+        if isLast:
+            answ[0][mirBn] = re/divider
+            answ[1][mirBn] = im/divider
+        else:
+            answ[0][i] = re/divider
+            answ[1][i] = im/divider 
     return answ
 
 
@@ -170,21 +149,11 @@ def fft(data, isForward):
     N1 = 0
     k = []
     dt = data[:]
-    answ = [[]]
-    answ.append([])
-    binarMaxSize = DecToRevBinary(k, len(data[0]) - 1)
-    for i in range(binarMaxSize):
+    binarMaxSize = int(math.log2( len(data[0])+0.1))
+    for i in range(binarMaxSize - 1):
         dt = fftAn(i+1, dt, binarMaxSize, isForward)
+    dt = fftAn(binarMaxSize, dt, binarMaxSize, isForward, True)
 
-    for i in range(len(dt[0])):
-        k = []
-        DecToRevBinary(k, i)
-        for j in range(binarMaxSize - len(k)):
-            k.append(0)
-        ind = BinaryToDec(k)
-        answ[0].append(dt[0][ind])
-        answ[1].append(dt[1][ind])
-    dt = answ
     return dt
     
 
@@ -193,7 +162,6 @@ def fft(data, isForward):
 #data = [[1,2,3,4], [0,0,0,0]]
 data = [[1,2,3,4,5,6,7,8], [0,0,3,0,0,0,0,0]]
 #data = [[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8], [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
-
 size = len(data[0])
 for i in range(1, math.floor(math.sqrt(len(data[0])))+1):
     if(size%i==0):
