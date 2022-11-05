@@ -120,7 +120,7 @@ def fftAn(r, dt, binarMaxSize, isForward, isLast = False):
     for i in range(len(dt[0])):
         N1+=5
         bn = i
-        mirBn = MirrorBinarry(bn, binarMaxSize)
+        mirBn = MirrorBinarry(bn, binarMaxSize) & ~((~0)<<r)
 
         bn = ChangeDigit(bn, binarMaxSize - r, 0)
         re = dt[0][bn]
@@ -160,7 +160,7 @@ def fft(data, isForward):
 ###############################################
 
 #data = [[1,2,3,4], [0,0,0,0]]
-data = [[1,2,3,4,5,6,7,8], [0,0,3,0,0,0,0,0]]
+data = [[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8], [0,0,3,0,0,0,0,0,0,0,3,0,0,0,0,0]]
 #data = [[1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8], [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]]
 size = len(data[0])
 for i in range(1, math.floor(math.sqrt(len(data[0])))+1):
